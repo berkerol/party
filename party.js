@@ -1,24 +1,4 @@
-/* global performance FPSMeter */
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-const getTime = typeof performance === 'function' ? performance.now : Date.now;
-const FRAME_THRESHOLD = 300;
-const FRAME_DURATION = 1000 / 58;
-let then = getTime();
-let acc = 0;
-let animation;
-const meter = new FPSMeter({
-  left: canvas.width - 130 + 'px',
-  top: 'auto',
-  bottom: '12px',
-  theme: 'colorful',
-  heat: 1,
-  graph: 1
-});
-
+/* global canvas ctx addPause addResize loop paintLine generateRandomNumber generateRandomRgbColor */
 const confetti = {
   highestAlpha: 1.0,
   highestLength: 20,
@@ -42,47 +22,28 @@ const confetti = {
 
 const confettis = [];
 
-draw();
-document.addEventListener('keyup', keyUpHandler);
-window.addEventListener('resize', resizeHandler);
+addPause();
+addResize();
 
-function draw () {
-  const now = getTime();
-  let ms = now - then;
-  let frames = 0;
-  then = now;
-  if (ms < FRAME_THRESHOLD) {
-    acc += ms;
-    while (acc >= FRAME_DURATION) {
-      frames++;
-      acc -= FRAME_DURATION;
-    }
-  }
-  meter.tick();
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+loop(function (frames) {
   for (const c of confettis) {
     ctx.lineWidth = c.lineWidth;
-    ctx.strokeStyle = c.color;
-    ctx.beginPath();
-    ctx.moveTo(c.x, c.y);
-    ctx.lineTo(c.x + Math.sin(c.angle) * c.length, c.y + Math.cos(c.angle) * c.length);
-    ctx.stroke();
+    paintLine(c.x, c.y, c.x + Math.sin(c.angle) * c.length, c.y + Math.cos(c.angle) * c.length, c.color);
   }
   createConfettis();
   removeConfettis(frames);
-  animation = window.requestAnimationFrame(draw);
-}
+});
 
 function createConfettis () {
   if (Math.random() < confetti.probability) {
     const color = generateRandomRgbColor();
-    const alpha = confetti.lowestAlpha + Math.random() * (confetti.highestAlpha - confetti.lowestAlpha);
-    const length = confetti.lowestLength + Math.random() * (confetti.highestLength - confetti.lowestLength);
-    const lengthChange = confetti.lowestLengthChange + Math.random() * (confetti.highestLengthChange - confetti.lowestLengthChange);
-    const lineWidth = confetti.lowestLineWidth + Math.random() * (confetti.highestLineWidth - confetti.lowestLineWidth);
-    const lineWidthChange = confetti.lowestLineWidthChange + Math.random() * (confetti.highestLineWidthChange - confetti.lowestLineWidthChange);
-    const rotation = confetti.lowestRotation + Math.random() * (confetti.highestRotation - confetti.lowestRotation);
-    let speedX = confetti.lowestSpeedX + Math.random() * (confetti.highestSpeedX - confetti.lowestSpeedX);
+    const alpha = generateRandomNumber(confetti.lowestAlpha, confetti.highestAlpha);
+    const length = generateRandomNumber(confetti.lowestLength, confetti.highestLength);
+    const lengthChange = generateRandomNumber(confetti.lowestLengthChange, confetti.highestLengthChange);
+    const lineWidth = generateRandomNumber(confetti.lowestLineWidth, confetti.highestLineWidth);
+    const lineWidthChange = generateRandomNumber(confetti.lowestLineWidthChange, confetti.highestLineWidthChange);
+    const rotation = generateRandomNumber(confetti.lowestRotation, confetti.highestRotation);
+    let speedX = generateRandomNumber(confetti.lowestSpeedX, confetti.highestSpeedX);
     let x;
     let y;
     if (Math.random() < confetti.sideProbability) {
@@ -111,7 +72,7 @@ function createConfettis () {
       lineWidthChange: Math.random() < 0.5 ? lineWidthChange : -lineWidthChange,
       rotation: Math.random() < 0.5 ? rotation : -rotation,
       speedX,
-      speedY: confetti.lowestSpeedY + Math.random() * (confetti.highestSpeedY - confetti.lowestSpeedY)
+      speedY: generateRandomNumber(confetti.lowestSpeedY, confetti.highestSpeedY)
     });
   }
 }
@@ -135,24 +96,4 @@ function removeConfettis (frames) {
       c.lineWidth += c.lineWidthChange * frames;
     }
   }
-}
-
-function generateRandomRgbColor () {
-  return [Math.floor(Math.random() * 255), Math.floor(Math.random() * 255), Math.floor(Math.random() * 255)];
-}
-
-function keyUpHandler (e) {
-  if (e.keyCode === 80) {
-    if (animation === undefined) {
-      animation = window.requestAnimationFrame(draw);
-    } else {
-      window.cancelAnimationFrame(animation);
-      animation = undefined;
-    }
-  }
-}
-
-function resizeHandler () {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
 }
